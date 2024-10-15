@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>AR.js A-Frame Location-based</title>
+    <!-- Mengimpor A-Frame versi 1.3.0 -->
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <!-- Mengimpor AR.js untuk pelacakan lokasi GPS -->
+    <script type='text/javascript' src='https://raw.githack.com/AR-js-org/AR.js/master/three.js/build/ar-threex-location-only.js'></script>
+    <script type='text/javascript' src='https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js'></script>
+</head>
+<body>
+    <!-- Scene AR.js -->
+    <a-scene 
+        vr-mode-ui='enabled: false' 
+        arjs='sourceType: webcam; videoTexture: true; debugUIEnabled: false' 
+        renderer='antialias: true; alpha: true'>
+        
+        <!-- Kamera dengan GPS tracking -->
+        <a-camera gps-new-camera='gpsMinDistance: 5'></a-camera>
+        
+        <!-- Objek 3D GLB dengan rotasi dua jari -->
+        <a-entity 
+            id="vayuModel"
+            gltf-model="https://cdn.jsdelivr.net/gh/BliKadek89/gwk3d@main/Vayu/Vayu.glb" 
+            gps-new-entity-place="latitude: -8.719331528264286; longitude: 115.17817139884218" 
+            position="0 -30 0" 
+            scale="20 20 20">
+        </a-entity>
+        
+    </a-scene>
+
+    <script>
+        // Variabel untuk menyimpan rotasi awal dan data touch
+        let initialRotation = { x: 0, y: 0, z: 0 };
+        let startTouchDistance = 0;
+
+        const vayuModel = document.getElementById('vayuModel');
+
+        // Fungsi untuk mendapatkan jarak antara dua sentuhan
+        function getTouchDistance(touch1, touch2) {
+            const dx = touch1.clientX - touch2.clientX;
+            const dy = touch1.clientY - touch2.clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        // Event listener untuk mendeteksi sentuhan awal (dua jari)
+        document.addEventListener('touchstart', function (event) {
+            if (event.touches.length === 2) {
+                const touch1 = event.touches[0];
+                const touch2 = event.touches[1];
+
+                // Simpan rotasi awal model
+                const rotation = vayuModel.getAttribute('rotation');
+                initialRotation = { x: rotation.x, y: rotation.y, z: rotation.z };
+
+                // Simpan jarak awal antara dua sentuhan
+                startTouchDistance = getTouchDistance(touch1, touch2);
+            }
+        });
+
+        // Event listener untuk mendeteksi gerakan sentuhan
+        document.addEventListener('touchmove', function (event) {
+            if (event.touches.length === 2) {
+                const touch1 = event.touches[0];
+                const touch2 = event.touches[1];
+
+                // Hitung jarak baru antara dua sentuhan
+                const newTouchDistance = getTouchDistance(touch1, touch2);
+
+                // Rotasi pada sumbu Y (horizontal) berdasarkan gerakan jari
+                const rotationDelta = (newTouchDistance - startTouchDistance) * 0.1; // Atur sensitivitas
+
+                // Perbarui rotasi objek 3D
+                vayuModel.setAttribute('rotation', {
+                    x: initialRotation.x,
+                    y: initialRotation.y + rotationDelta,
+                    z: initialRotation.z
+                });
+            }
+        });
+    </script>
+</body>
+</html>
